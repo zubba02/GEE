@@ -1,17 +1,6 @@
 //Geometry Polygon
 
-var selected_island = 
-    /* color: #ffc82d */
-    /* displayProperties: [
-      {
-        "type": "rectangle"
-      }
-    ] */
-    ee.Geometry.Polygon(
-        [[[73.4545852323529, 5.8411879284001635],
-          [73.4545852323529, 5.805581237652129],
-          [73.48681465587585, 5.805581237652129],
-          [73.48681465587585, 5.8411879284001635]]], null, false);
+
 
 
 //Image Collection
@@ -65,10 +54,9 @@ var clasifyNDVI = function(img){
     return img.addBands(veg)
     }
 
+S1 = S1.map(clasifyNDVI)
 
 //visualize
-
-S1 = S1.map(clasifyNDVI)
 
 var classification = S1.first().clip(selected_island).select('Veg'); 
 
@@ -115,3 +103,35 @@ var chart =
         });
         
 print(chart);
+
+//////////////////////
+
+//var lossImage = S1.select(['Veg']);
+
+var classification = S1.first().clip(selected_island).select('Veg'); 
+var classification2 = S1.first().clip(selected_island).select('Land'); 
+
+var stats = classification.reduceRegion({
+  reducer: ee.Reducer.sum(),
+  geometry: selected_island,
+  scale: 100
+});
+
+var st1 = ee.Number(stats.get('Veg'));
+print (st1)
+
+
+var stats2 = classification2.reduceRegion({
+  reducer: ee.Reducer.sum(),
+  geometry: selected_island,
+  scale: 100
+});
+
+var st2 = ee.Number(stats2.get('Land'));
+print (st2)
+
+
+var s3 = ee.Number(st1).divide(st2).multiply(100)
+print (s3)
+
+
