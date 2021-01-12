@@ -1,5 +1,16 @@
 //Geometry Polygon
-
+var selected_island = 
+    /* color: #ffc82d */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[73.4545852323529, 5.8411879284001635],
+          [73.4545852323529, 5.805581237652129],
+          [73.48681465587585, 5.805581237652129],
+          [73.48681465587585, 5.8411879284001635]]], null, false);
 
 
 
@@ -104,34 +115,53 @@ var chart =
         
 print(chart);
 
-//////////////////////
+//Calculate and add vegetation 
 
-//var lossImage = S1.select(['Veg']);
+var calcArea = function(img) {
+      var Vegg = img.clip(selected_island).select('Veg');
+      var Landd = img.clip(selected_island).select('Land');
+      
+      var stats = Vegg.reduceRegion({
+        reducer: ee.Reducer.sum(),
+        geometry: selected_island,
+        scale: 100
+      });
+      
+      var st1 = ee.Number(stats.get('Veg'));
+      
+      var stats2 = Landd.reduceRegion({
+        reducer: ee.Reducer.sum(),
+        geometry: selected_island,
+        scale: 100
+      });
+      
+      var st2 = ee.Number(stats2.get('Land'));
+      
+      var s3 = ee.Number(st1).divide(st2).multiply(100);
+      
+      return img.addBands(s3)
+    }
 
-var classification = S1.first().clip(selected_island).select('Veg'); 
-var classification2 = S1.first().clip(selected_island).select('Land'); 
+S1 = S1.map(calcArea)
 
-var stats = classification.reduceRegion({
-  reducer: ee.Reducer.sum(),
-  geometry: selected_island,
-  scale: 100
-});
+//Add Percentage Area Plot
 
-var st1 = ee.Number(stats.get('Veg'));
-print (st1)
+var ClassChart = ui.Chart.image.series({
+      imageCollection: S1.select('constant'),
+      region: selected_island,
+      reducer: ee.Reducer.median(),
+      scale: 10000,
+    })
+  .setOptions({
+      title: 'Island Size over time',
+      fontSize: 12.5,
+      hAxis: {'title': 'Date'},
+      vAxis: {'title': 'Percentage of Vegetation over time'},
+      lineWidth: 0.15,
+      pointSize: 2.0,
+      color: '00FF00'
+    })
+    .setChartType('ScatterChart');
 
-
-var stats2 = classification2.reduceRegion({
-  reducer: ee.Reducer.sum(),
-  geometry: selected_island,
-  scale: 100
-});
-
-var st2 = ee.Number(stats2.get('Land'));
-print (st2)
-
-
-var s3 = ee.Number(st1).divide(st2).multiply(100)
-print (s3)
-
-
+print (ClassChart)
+  
