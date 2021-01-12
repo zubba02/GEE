@@ -1,5 +1,18 @@
 //Geometry Polygon
 
+var selected_island = 
+    /* color: #ffc82d */
+    /* displayProperties: [
+      {
+        "type": "rectangle"
+      }
+    ] */
+    ee.Geometry.Polygon(
+        [[[73.4545852323529, 5.8411879284001635],
+          [73.4545852323529, 5.805581237652129],
+          [73.48681465587585, 5.805581237652129],
+          [73.48681465587585, 5.8411879284001635]]], null, false);
+
 
 
 
