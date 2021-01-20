@@ -1,6 +1,6 @@
 var islands = ee.FeatureCollection ('users/zubba1989/islands_mv');
 
-var panel = ui.Panel({style: {width: '500px', position: 'bottom-right'}});
+var panel = ui.Panel({style: {width: '400px', position: 'bottom-right'}});
 panel.add(ui.Label({value: 'Island Vegetation and Area Calculator.',
   style: {
     fontWeight: 'bold',
@@ -221,6 +221,7 @@ var islandSelect = ui.Select({
     var S1 = ee.ImageCollection('COPERNICUS/S2').filterBounds(selected_island).filterDate('2016-01-01','2020-09-01');
     var filtered = S1.filterMetadata('CLOUD_COVERAGE_ASSESSMENT', 'less_than', 10)
     
+    
     //CREATE THE CLOUD MASK
   
     function maskS2clouds(image) {
@@ -282,7 +283,7 @@ var islandSelect = ui.Select({
       palette: ['#FFFF00','#FFFF00']
     }
     
-    Map.addLayer(classification,visParams,'Veg_NDVI')
+    Map.addLayer(classification,visParams,'Vegetation(NDVI)')
     
     //CALCULATE EVI, ADD THE EVI BAND, CLASSIFY THE EVI AND map EVI Derived Veg to add it as a band
     
@@ -320,7 +321,55 @@ var islandSelect = ui.Select({
     
     
     var classification2 = S1.median().clip(selected_island).select('Veg_EVI'); 
-    Map.addLayer(classification2,visParams2,'Veg_EVI')
+    Map.addLayer(classification2,visParams2,'Vegetation(EVI)')
+    
+    
+     
+    //Adding BI
+    
+   
+    ///Thresholds taken from https://custom-scripts.sentinel-hub.com/sentinel-2/urban_classified/#
+      
+      
+       var clasifywater= function(img){
+      var ndwi = img.select('NDWI')
+      var water_only = ndwi.gt(0.25).rename('water_only')
+      water_only = water_only.updateMask(water_only)
+    return img.addBands(water_only)
+    }
+      
+      S1 = S1.map(clasifywater);
+      
+      var visParams3 = {
+      min: -1,
+      max: 1,
+      palette: ['#00008b','#00008b']
+    }
+    
+    
+    var classification3 = S1.median().clip(selected_island).select('water_only'); 
+    Map.addLayer(classification3,visParams3,'Water')
+    
+    /////
+    
+    var s1_median = S1.median().select('B11').clip(selected_island);
+    
+    var clasifybuiltup = function(img){
+      var builtup = img.select('B11').lt(5000).and(img.select('B11').gt(2200)).rename('built_up');
+      var masked = builtup.updateMask(builtup)
+    return img.addBands(masked)
+    }
+    
+var classification = clasifybuiltup(s1_median); 
+
+var palettes = require('users/gena/packages:palettes');
+var palette = palettes.misc.jet[7];
+var opacity = 0.5;
+
+Map.addLayer(classification.select('built_up'), {min: 0, max: 1, palette: palette}, 'Built_Up_Areas');
+    
+    ///////////////
+
     
     ///Create Chart
 
